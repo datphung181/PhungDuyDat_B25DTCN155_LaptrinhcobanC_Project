@@ -80,11 +80,15 @@ void menu() {
         printf("|2. Cap nhat ho so nhan vien                               |\n");
         printf("|3. Sa thai / nghi viec                                    |\n");
         printf("|4. Hien thi danh sach nhan vien                           |\n");
-        printf("|9. Thoat                                                  |\n");
-        printf("+----------------------------------------------------------+\n");
-
-        printf("Nhap lua chon cua ban: ");
-        scanf("%d", &choice);
+        printf("|5. Tra cuu thong tin nhan vien                            |\n");
+	    printf("|6. Sap xep danh sach nhan vien theo luong co ban          |\n");
+	    printf("|7. Cham ngay cong                                         |\n");
+	    printf("|8. Xem bang cong                                          |\n");
+	    printf("|9. Thoat                                                  |\n");
+	    printf("+----------------------------------------------------------+\n");
+	
+	    printf("Nhap lua chon cua ban : ");
+	    scanf("%d" , &choice);
         getchar(); // clear buffer
 
         switch (choice) {
@@ -142,7 +146,7 @@ void CreateNewEmployee() {
 // ===================== FUNC 2: Update Employee =====================
 void UpdateProfileEmployee() {
     char id[20];
-    int idx;
+    int searchEmpID;
 
     printf("\n-- CAP NHAT NHAN VIEN --\n");
 
@@ -150,8 +154,8 @@ void UpdateProfileEmployee() {
         printf("Nhap ma NV: ");
         inputString(id, 20);
 
-        idx = findEmpByID(id);
-        if (idx == -1) {
+        searchEmpID = findEmpByID(id);
+        if (searchEmpID == -1) {
             printf("Khong tim thay nhan vien! Nhap lai!\n");
             continue;
         }
@@ -159,10 +163,10 @@ void UpdateProfileEmployee() {
     }
 
     printf("Nhap chuc vu moi: ");
-    inputString(empList[idx].position, 15);
+    inputString(empList[searchEmpID].position, 15);
 
     printf("Nhap luong moi: ");
-    scanf("%lf", &empList[idx].baseSalary);
+    scanf("%lf", &empList[searchEmpID].baseSalary);
     getchar();
 
     printf("Cap nhat thanh cong!\n");
@@ -172,7 +176,7 @@ void UpdateProfileEmployee() {
 // ===================== FUNC 3: Delete Employee =====================
 void DeleteEmployee() {
     char id[20];
-    int idx;
+    int deleteEmpID;
 
     printf("\n-- SA THAI NHAN VIEN --\n");
 
@@ -180,15 +184,15 @@ void DeleteEmployee() {
         printf("Nhap ma NV: ");
         inputString(id, 20);
 
-        idx = findEmpByID(id);
-        if (idx == -1) {
+        deleteEmpID = findEmpByID(id);
+        if (deleteEmpID == -1) {
             printf("Khong tim thay nhan vien! Nhap lai!\n");
             continue;
         }
         break;
     }
 
-    for (int i = idx; i < empCount - 1; i++)
+    for (int i = deleteEmpID; i < empCount - 1; i++)
         empList[i] = empList[i + 1];
 
     empCount--;
