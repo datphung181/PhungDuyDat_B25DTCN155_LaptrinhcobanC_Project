@@ -60,86 +60,174 @@ int checkDuplicateDate(char id[], char date[]) {
     return 0;
 }
 
-// F01: Add employee
-void addEmployee() {
-	Employee newEMP;
-	printf("\n-- THEM NHAN VIEN --\n");
-	
-	
-	printf("Nhap ma NV: ");
-	fflush(stdin);
-	gets(newEMP.empId);
-	
-	
-	if (strcmp(newEMP.empId, "") == 0 || checkDuplicateID(newEMP.empId)) {
-	printf("Ma NV bi rong hoac da ton tai!\n");
-	return;
-	}
-	
-	
-	printf("Nhap ten NV: ");
-	gets(newEMP.name);
-	printf("Nhap chuc vu: ");
-	gets(newEMP.position);
-	printf("Nhap luong co ban: ");
-	scanf("%lf", &newEMP.baseSalary);
-	
-	
-	newEMP.workDay = 0;
-	empList[empCount++] = newEMP;	
-	
-	
-	printf("Them nhan vien thanh cong!\n");
+void inputString(char *s, int maxLen) {
+    fflush(stdin);
+    fgets(s, maxLen, stdin);
+    s[strcspn(s, "\n")] = 0; 
 }
+
+
+// F01: Create New Employee
+void CreateNewEmployee() {
+    Employee newEMP;
+    printf("\n-- THEM NHAN VIEN --\n");
+
+    while (1) {
+        printf("Nhap ma NV: ");
+        inputString(newEMP.empId, 20);
+
+        if (strcmp(newEMP.empId, "") == 0) {
+            printf("Ma NV khong duoc rong! Nhap lai!\n");
+            continue;
+        }
+
+        if (checkDuplicateID(newEMP.empId)) {
+            printf("Ma NV da ton tai! Nhap lai!\n");
+            continue;
+        }
+
+        break; 
+    }
+
+    printf("Nhap ten NV: ");
+    inputString(newEMP.name, 50);
+
+    printf("Nhap chuc vu: ");
+    inputString(newEMP.position, 15);
+
+    printf("Nhap luong co ban: ");
+    scanf("%lf", &newEMP.baseSalary);
+
+    newEMP.workDay = 0;
+    empList[empCount++] = newEMP;
+
+    printf("Them nhan vien thanh cong!\n");
+}
+
 
 
 // F02: Update employee
-void updateEmployee() {
-	char id[20];
-	printf("\n-- CAP NHAT NHAN VIEN --\n");
-	printf("Nhap ma NV: ");
-	fflush(stdin);
-	gets(id);
-	
-	
-	int idx = findEmpByID(id);
-	if (idx == -1) {
-	printf("Khong tim thay nhan vien!\n");
-	return;
-	}
-	
-	
-	printf("Nhap chuc vu moi: ");
-	gets(empList[idx].position);
-	printf("Nhap luong moi: ");
-	scanf("%lf", &empList[idx].baseSalary);
-	
-	
-	printf("Cap nhat thanh cong!\n");
+void UpdateProfileEmployee() {
+    char id[20];
+    int searchEmpID ;
+
+    printf("\n-- CAP NHAT NHAN VIEN --\n");
+
+    while (1) {
+        printf("Nhap ma ID NV: ");
+        inputString(id, 20);
+
+        searchEmpID = findEmpByID(id);
+        if (searchEmpID == -1) {
+            printf("Khong tim thay nhan vien! Nhap lai!\n");
+            continue;
+        }
+        break;
+    }
+
+    printf("Nhap chuc vu moi: ");
+    inputString(empList[searchEmpID].position, 15);
+
+    printf("Nhap luong moi: ");
+    scanf("%lf", &empList[searchEmpID].baseSalary);
+
+    printf("Cap nhat thanh cong!\n");
 }
 
+
+
+// F03: Deleta employee
+void DeleteEmployee() {
+    char id[20];
+	int deleteEmpID;
+	printf("\n-- SA THAI NHAN VIEN --\n");
+	
+    while (1) {
+    	
+    	printf("Nhap ma ID NV: ");
+        inputString( id, 20);
+
+        int deleteEmpID = findEmpByID(id);
+
+        if (deleteEmpID == -1) {
+            printf("Khong tim thay nhan vien! Nhap lai.\n");
+            continue;
+        }
+
+        // Xoa nhan vien khoi empList
+        for (int i = deleteEmpID; i < empCount - 1; i++) {
+            empList[i] = empList[i + 1];
+        }
+        empCount--;
+
+        // Xoa het cac cham cong thuoc ve NV nay
+        for (int i = 0; i < logCount; i++) {
+            if (strcmp(timeList[i].empId, id) == 0) {
+                for (int j = i; j < logCount - 1; j++) {
+                    timeList[j] = timeList[j + 1];
+                }
+                logCount--;
+                i--; 
+            }
+        }
+
+        printf("Xoa nhan vien thanh cong!\n");
+        break;
+    }
+}
+
+
+// F04: Display Employee List
+void DisplayEmployees() {
+    if (empCount == 0) {
+        printf("\nDanh sach nhan vien rong!\n");
+        return;
+    }
+
+    printf("\n=======================================================================================\n");
+    printf("%-15s %-20s %-15s %-15s %-10s\n",
+           "Ma NV", "Ten NV", "Chuc vu", "Luong co ban", "Ngay cong");
+    printf("---------------------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < empCount; i++) {
+        printf("%-15s %-20s %-15s %-15.2lf %-10d\n",
+               empList[i].empId,
+               empList[i].name,
+               empList[i].position,
+               empList[i].baseSalary,
+               empList[i].workDay);
+    }
+
+    printf("=======================================================================================\n");
+}
 
 
 // ================= MENU =================
 void menu() {
 	int choice;
 	do {
-		printf("\n===== MENU =====\n");
-		printf("1. Them nhan vien\n");
-		printf("2. Cap nhat nhan vien\n");
-		printf("3. Xoa nhan vien\n");
-		printf("4. Hien thi danh sach\n");
-		printf("5. Tim kiem nhan vien\n");
-		printf("6. Sap xep luong\n");
-		printf("7. Cham cong\n");
-		printf("8. Xem bang cong\n");
-		printf("0. Thoat\n");
-		printf("Chon: ");
-		scanf("%d", &choice);
+		printf("\n+----------------------------------------------------------+\n");
+		printf("|          Danh sach quan ly nhan vien va cham cong        | ");
+		printf("\n+----------------------------------------------------------+\n");
+	    printf("|1. Them moi nhan vien                                     |\n");
+	    printf("|2. Cap nhat ho so nhan vien                               |\n");
+	    printf("|3. Sa thai / nghi viec                                    |\n");
+	    printf("|4. Hien thi danh sach nhan vien                           |\n");
+	    printf("|5. Tra cuu thong tin nhan vien                            |\n");
+	    printf("|6. Sap xep danh sach nhan vien theo luong co ban          |\n");
+	    printf("|7. Cham ngay cong                                         |\n");
+	    printf("|8. Xem bang cong                                          |\n");
+	    printf("|9. Thoat                                                  |\n");
+	    printf("+----------------------------------------------------------+\n");
+		
+	    printf("Nhap lua chon cua ban : ");
+	    scanf("%d" , &choice);
 
 		switch(choice) {
-			case 1: addEmployee(); break;
-			case 2: updateEmployee(); break;
+			case 1: CreateNewEmployee(); break;	
+			case 2: UpdateProfileEmployee(); break;
+			case 3: DeleteEmployee(); break;
+			case 4: DisplayEmployees(); break;
 		}
 	} while(choice != 0);
 }
