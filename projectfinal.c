@@ -282,30 +282,13 @@ void DeleteEmployee() {
         break;
     }
 
-    // ===== XAC NHAN XOA =====
-    while (1) {
-        printf("Ban co chac chan muon xoa nhan vien %s? (Y/N): ", id);
-        scanf(" %c", &confirm);
-
-        if (confirm == 'Y' || confirm == 'y') {
-            break;
-        } 
-        else if (confirm == 'N' || confirm == 'n') {
-            printf("? Da huy thao tac xoa.\n");
-            return;
-        }
-        else {
-            printf("? Chi duoc nhap Y hoac N.\n");
-        }
-    }
-
     // ===== TIEN HANH XOA =====
     for (int i = deleteEmpID; i < empCount - 1; i++)
         empList[i] = empList[i + 1];
 
     empCount--;
 
-    printf(" Xoa nhan vien thanh cong!\n");
+    printf(" Xoa nhan vien co ID [%s] thanh cong!\n",id);
 }
 
 
