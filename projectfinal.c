@@ -106,6 +106,9 @@ void menu() {
 // ===================== FUNC 1: Create New Employee =====================
 void CreateNewEmployee() {
     Employee newEMP;
+	if (empCount >= MAX_EMP) {
+    printf("\n Danh sach nhan vien da day! Khong the them moi.\n");
+    return;
 
     printf("\n-- THEM NHAN VIEN --\n");
 
@@ -316,3 +319,4 @@ void DisplayEmployees() {
 
     printf("=======================================================================================\n");
 }
+
