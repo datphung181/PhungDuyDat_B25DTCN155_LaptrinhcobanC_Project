@@ -68,7 +68,7 @@ void inputString(char *s, int maxLen) {
 int findEmpByName(char name[]) {
     for (int i = 0; i < empCount; i++) {
         if (strcasecmp(empList[i].name, name) == 0) {
-            return i;   // tr? v? v? trí đ?u tiên trùng tên
+            return i;   
         }
     }
     return -1;
@@ -110,7 +110,7 @@ void menu() {
             case 1: CreateNewEmployee(); break;
             case 2: UpdateProfileEmployee(); break;
             case 3: DeleteEmployee(); break;
-            case 4: DisplayEmployees(); break;
+            case 4: DisplayEmployeesPaginated(); break;
             case 5: SearchEmployeeByName(); break;
             case 6: sortEmployeeBySalary(); break;
             case 9: printf("Thoat chuong trinh.\n"); break;
@@ -315,28 +315,60 @@ void DeleteEmployee() {
 
 
 // ===================== FUNC 4: Display Employees =====================
-void DisplayEmployees() {
+void DisplayEmployeesPaginated() {
     if (empCount == 0) {
         printf("\nDanh sach nhan vien rong!\n");
         return;
     }
 
-    printf("\n=======================================================================================\n");
-    printf("%-15s %-20s %-15s %-15s %-10s\n",
-        "Ma NV", "Ten NV", "Chuc vu", "Luong co ban", "Ngay cong");
-    printf("---------------------------------------------------------------------------------------\n");
+    int perPage = 5;  
+    int totalPage = (empCount + perPage - 1) / perPage;
+    int currentPage = 1;
+    int choice;
 
-    for (int i = 0; i < empCount; i++) {
-        printf("%-15s %-20s %-15s %-15.2lf %-10d\n",
-               empList[i].empId,
-               empList[i].name,
-               empList[i].position,
-               empList[i].baseSalary,
-               empList[i].workDay);
+    while (1) {
+
+        int start = (currentPage - 1) * perPage;
+        int end = start + perPage;
+        if (end > empCount) end = empCount;
+
+        printf("\n==================== TRANG %d / %d ====================\n", currentPage, totalPage);
+        printf("%-15s %-20s %-15s %-15s %-10s\n",
+            "Ma NV", "Ten NV", "Chuc vu", "Luong", "Ngay cong");
+        printf("-------------------------------------------------------\n");
+
+        for (int i = start; i < end; i++) {
+            printf("%-15s %-20s %-15s %-15.2lf %-10d\n",
+                empList[i].empId,
+                empList[i].name,
+                empList[i].position,
+                empList[i].baseSalary,
+                empList[i].workDay);
+        }
+
+        printf("=======================================================\n");
+        printf("1. Trang truoc | 2. Trang sau | 0. Thoat\n");
+        printf("Nhap lua chon: ");
+        scanf("%d", &choice);
+        getchar();
+
+        if (choice == 1) {
+            if (currentPage > 1) currentPage--;
+            else printf("Ban dang o trang dau!\n");
+        }
+        else if (choice == 2) {
+            if (currentPage < totalPage) currentPage++;
+            else printf("Ban dang o trang cuoi!\n");
+        }
+        else if (choice == 0) {
+            break;
+        }
+        else {
+            printf("Lua chon khong hop le!\n");
+        }
     }
-
-    printf("=======================================================================================\n");
 }
+
 
 // ===================== FUNC 5: Search Employee by Name =====================
 void printEmployee(Employee emp) {
