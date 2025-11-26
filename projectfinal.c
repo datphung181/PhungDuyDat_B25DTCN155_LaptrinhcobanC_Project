@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_EMP 100
+#define MAX_EMP 100 
 #define MAX_LOG 500
-
+ 
 // ===================== STRUCT =====================
 typedef struct {
     char empId[20];
@@ -35,6 +35,11 @@ void CreateNewEmployee();
 void UpdateProfileEmployee();
 void DeleteEmployee();
 void DisplayEmployees();
+void SearchEmployeeByName();
+void printEmployee(Employee emp);
+void toLowerCase(char *str);
+void sortEmployeeBySalary();
+
 
 int findEmpByID(char id[]);
 int checkDuplicateID(char id[]);
@@ -59,6 +64,16 @@ void inputString(char *s, int maxLen) {
     fgets(s, maxLen, stdin);
     s[strcspn(s, "\n")] = '\0';
 }
+
+int findEmpByName(char name[]) {
+    for (int i = 0; i < empCount; i++) {
+        if (strcasecmp(empList[i].name, name) == 0) {
+            return i;   // tr? v? v? trí đ?u tiên trùng tên
+        }
+    }
+    return -1;
+}
+
 
 
 // ===================== MAIN =====================
@@ -96,6 +111,8 @@ void menu() {
             case 2: UpdateProfileEmployee(); break;
             case 3: DeleteEmployee(); break;
             case 4: DisplayEmployees(); break;
+            case 5: SearchEmployeeByName(); break;
+            case 6: sortEmployeeBySalary(); break;
             case 9: printf("Thoat chuong trinh.\n"); break;
             default: printf("Lua chon khong hop le!\n");
         }
@@ -106,9 +123,7 @@ void menu() {
 // ===================== FUNC 1: Create New Employee =====================
 void CreateNewEmployee() {
     Employee newEMP;
-	if (empCount >= MAX_EMP) {
-    printf("\n Danh sach nhan vien da day! Khong the them moi.\n");
-    return;
+
 
     printf("\n-- THEM NHAN VIEN --\n");
 
@@ -125,7 +140,7 @@ void CreateNewEmployee() {
         if (checkDuplicateID(newEMP.empId)) {
             printf("? Ma NV da ton tai! Nhap lai.\n");
             continue;
-        }
+        } 
         break;
     }
 
@@ -216,6 +231,10 @@ void CreateNewEmployee() {
 void UpdateProfileEmployee() {
     char id[20];
     int searchEmpID;
+    if (empCount == 0) {
+        printf("\nDanh sach nhan vien rong!\n");
+        return;
+    }
 
     printf("\n-- CAP NHAT NHAN VIEN --\n");
 
@@ -269,7 +288,6 @@ void UpdateProfileEmployee() {
 void DeleteEmployee() {
     char id[20];
     int deleteEmpID;
-    char confirm;
 
     printf("\n-- SA THAI NHAN VIEN --\n");
 
@@ -319,4 +337,122 @@ void DisplayEmployees() {
 
     printf("=======================================================================================\n");
 }
+
+// ===================== FUNC 5: Search Employee by Name =====================
+void printEmployee(Employee emp) {
+    printf("Ma NV: %s\n", emp.empId);
+    printf("Ten NV: %s\n", emp.name);
+    printf("Chuc vu: %s\n", emp.position);
+    printf("Luong co ban: %.2lf\n", emp.baseSalary);
+    printf("Ngay cong: %d\n", emp.workDay);
+}
+
+void toLowerCase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
+void SearchEmployeeByName() {
+    if (empCount == 0) {
+        printf("\nDanh sach nhan vien dang rong!\n");
+        return;
+    }
+
+    char keyword[50];
+    char tempName[50];
+    char tempKeyword[50];
+    int foundAny = 0;
+
+    printf("\n=== TIM KIEM NHAN VIEN THEO TEN ===\n");
+    printf("Nhap mot phan hoac toan bo ten NV: ");
+    inputString(keyword, 50);
+
+    strcpy(tempKeyword, keyword);
+    toLowerCase(tempKeyword);
+
+    printf("\n===== KET QUA KIEM TRA TUNG NHAN VIEN =====\n");
+
+    int foundIndex[MAX_EMP];
+    int foundCount = 0;
+
+    for (int i = 0; i < empCount; i++) {
+
+        strcpy(tempName, empList[i].name);
+        toLowerCase(tempName);
+
+        if (strstr(tempName, tempKeyword) != NULL) {
+            printf("%s -> Tim thay\n", empList[i].name);
+            foundIndex[foundCount++] = i;
+            foundAny = 1;
+        } else {
+            printf("%s -> Khong tim thay\n", empList[i].name);
+        }
+    }
+
+    if (!foundAny) {
+        printf("\nKhong co nhan vien nao chua tu khoa '%s'\n", keyword);
+        return;
+    }
+
+    printf("\n===== THONG TIN CHI TIET CAC NHAN VIEN TIM THAY =====\n");
+
+    for (int i = 0; i < foundCount; i++) {
+        printEmployee(empList[foundIndex[i]]);
+        printf("-------------------------\n");
+    }
+}
+// ===================== FUNC 6: Sort Employee List by Base Salary =====================
+void sortEmployeeBySalary() {
+    if (empCount == 0) {
+        printf("\nDanh sach nhan vien hien dang trong!\n");
+        return;
+    }
+
+    int sortOrder;
+    do {
+        printf("\nChon kieu sap xep theo luong co ban:\n");
+        printf("1. Tang dan\n");
+        printf("2. Giam dan\n");
+        printf("Nhap lua chon: ");
+        scanf("%d", &sortOrder);
+
+        if (sortOrder != 1 && sortOrder != 2) {
+            printf("Lua chon khong hop le! Vui long nhap lai.\n");
+        }
+    } while (sortOrder != 1 && sortOrder != 2);
+
+    // ----------------- SORT -----------------
+    for (int i = 0; i < empCount - 1; i++) {
+        for (int j = i + 1; j < empCount; j++) {
+            if ((sortOrder == 1 && empList[i].baseSalary > empList[j].baseSalary) ||
+                (sortOrder == 2 && empList[i].baseSalary < empList[j].baseSalary)) {
+
+                Employee temp = empList[i];
+                empList[i] = empList[j];
+                empList[j] = temp;
+            }
+        }
+    }
+
+    // ----------------- OUTPUT -----------------
+    printf("\n=======================================================================================\n");
+    printf("%-15s %-20s %-15s %-15s %-10s\n",
+        "Ma NV", "Ten NV", "Chuc vu", "Luong co ban", "Ngay cong");
+    printf("---------------------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < empCount; i++) {
+        printf("%-15s %-20s %-15s %-15.2lf %-10d\n",
+               empList[i].empId,
+               empList[i].name,
+               empList[i].position,
+               empList[i].baseSalary,
+               empList[i].workDay);
+    }
+
+    printf("=======================================================================================\n");
+
+    printf("\nSap xep thanh cong!\n");
+}
+
 
