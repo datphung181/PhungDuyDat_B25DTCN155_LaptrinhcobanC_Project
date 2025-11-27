@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <ctype.h>
 
 #define MAX_EMP 100 
 #define MAX_LOG 500
- 
+
 // ===================== STRUCT =====================
 typedef struct {
     char empId[20];
@@ -34,16 +36,21 @@ void menu();
 void CreateNewEmployee();
 void UpdateProfileEmployee();
 void DeleteEmployee();
-void DisplayEmployees();
+void DisplayEmployeesPaginated();
 void SearchEmployeeByName();
 void printEmployee(Employee emp);
 void toLowerCase(char *str);
 void sortEmployeeBySalary();
-
+void ViewPersonalTimeSheet();
 
 int findEmpByID(char id[]);
 int checkDuplicateID(char id[]);
 void inputString(char *s, int maxLen);
+
+int validateDate(char date[]);
+int isFutureDate(int d, int m, int y);
+int checkDuplicateTimeSheet(char empId[], char date[]);
+void CheckInWorkDay();
 
 
 // ===================== Support Functions =====================
@@ -60,9 +67,11 @@ int checkDuplicateID(char id[]) {
 }
 
 void inputString(char *s, int maxLen) {
-    fflush(stdin);
-    fgets(s, maxLen, stdin);
-    s[strcspn(s, "\n")] = '\0';
+    if (fgets(s, maxLen, stdin) != NULL) {
+        s[strcspn(s, "\n")] = '\0';
+    } else {
+        s[0] = '\0';
+    }
 }
 
 int findEmpByName(char name[]) {
@@ -73,7 +82,6 @@ int findEmpByName(char name[]) {
     }
     return -1;
 }
-
 
 
 // ===================== MAIN =====================
@@ -96,15 +104,19 @@ void menu() {
         printf("|3. Sa thai / nghi viec                                    |\n");
         printf("|4. Hien thi danh sach nhan vien                           |\n");
         printf("|5. Tra cuu thong tin nhan vien                            |\n");
-	    printf("|6. Sap xep danh sach nhan vien theo luong co ban          |\n");
-	    printf("|7. Cham ngay cong                                         |\n");
-	    printf("|8. Xem bang cong                                          |\n");
-	    printf("|9. Thoat                                                  |\n");
-	    printf("+----------------------------------------------------------+\n");
-	
-	    printf("Nhap lua chon cua ban : ");
-	    scanf("%d" , &choice);
-        getchar(); // clear buffer
+        printf("|6. Sap xep danh sach nhan vien theo luong co ban          |\n");
+        printf("|7. Cham ngay cong                                         |\n");
+        printf("|8. Xem bang cong                                          |\n");
+        printf("|9. Thoat                                                  |\n");
+        printf("+----------------------------------------------------------+\n");
+
+        printf("Nhap lua chon cua ban : ");
+        if (scanf("%d" , &choice) != 1) {
+            while (getchar() != '\n'); // clear bad input
+            printf("Lua chon khong hop le!\n");
+            continue;
+        }
+        getchar(); // clear newline left
 
         switch (choice) {
             case 1: CreateNewEmployee(); break;
@@ -113,6 +125,8 @@ void menu() {
             case 4: DisplayEmployeesPaginated(); break;
             case 5: SearchEmployeeByName(); break;
             case 6: sortEmployeeBySalary(); break;
+            case 7: CheckInWorkDay(); break;
+            case 8: ViewPersonalTimeSheet(); break; 
             case 9: printf("Thoat chuong trinh.\n"); break;
             default: printf("Lua chon khong hop le!\n");
         }
@@ -124,13 +138,17 @@ void menu() {
 void CreateNewEmployee() {
     Employee newEMP;
 
-
     printf("\n-- THEM NHAN VIEN --\n");
 
     // ===== NHAP MA NV =====
     while (1) {
         printf("Nhap ma NV: ");
         inputString(newEMP.empId, 20);
+        
+        if (newEMP.empId[0] == '-') {
+            printf("Ma nhan vien khong hop le! Khong duoc bat dau bang dau '-'.\n");
+            continue;
+        }
 
         if (strlen(newEMP.empId) == 0) {
             printf("? Ma NV khong duoc rong!, Nhap lai\n");
@@ -140,7 +158,7 @@ void CreateNewEmployee() {
         if (checkDuplicateID(newEMP.empId)) {
             printf("? Ma NV da ton tai! Nhap lai.\n");
             continue;
-        } 
+        }
         break;
     }
 
@@ -191,13 +209,17 @@ void CreateNewEmployee() {
         printf("1. Mac dinh (0 ngay)\n");
         printf("2. Tu nhap ngay cong\n");
         printf("Lua chon: ");
-        scanf("%d", &option);
+        if (scanf("%d", &option) != 1) {
+            while (getchar() != '\n');
+            printf("Lua chon khong hop le!\n");
+            continue;
+        }
         getchar();
 
         if (option == 1) {
             newEMP.workDay = 0;
             break;
-        } 
+        }
         else if (option == 2) {
             while (1) {
                 printf("Nhap so ngay cong: ");
@@ -224,7 +246,6 @@ void CreateNewEmployee() {
 
     printf("? Them nhan vien thanh cong!\n");
 }
-
 
 
 // ===================== FUNC 2: Update Employee =====================
@@ -272,7 +293,7 @@ void UpdateProfileEmployee() {
             continue;
         }
         if (empList[searchEmpID].baseSalary <= 0) {
-            printf("? Luong phai > 0! Nhap lai.\n");
+            printf("? Luong phai lon hon 0! Nhap lai.\n");
             continue;
         }
         getchar();
@@ -283,11 +304,11 @@ void UpdateProfileEmployee() {
 }
 
 
-
 // ===================== FUNC 3: Delete Employee =====================
 void DeleteEmployee() {
     char id[20];
     int deleteEmpID;
+    char confirm; 
 
     printf("\n-- SA THAI NHAN VIEN --\n");
 
@@ -302,6 +323,23 @@ void DeleteEmployee() {
         }
         break;
     }
+    
+    // ===== XAC NHAN XOA =====
+    while (1) {
+        printf("Ban co chac chan muon xoa nhan vien %s? (Y/N): ", id);
+        scanf(" %c", &confirm);
+
+        if (confirm == 'Y' || confirm == 'y') {
+            break;
+        } 
+        else if (confirm == 'N' || confirm == 'n') {
+            printf("? Da huy thao tac xoa.\n");
+            return;
+        }
+        else {
+            printf("? Chi duoc nhap Y hoac N.\n");
+        }
+    }
 
     // ===== TIEN HANH XOA =====
     for (int i = deleteEmpID; i < empCount - 1; i++)
@@ -313,15 +351,14 @@ void DeleteEmployee() {
 }
 
 
-
-// ===================== FUNC 4: Display Employees =====================
+// ===================== FUNC 4: Display Employees (Paginated) =====================
 void DisplayEmployeesPaginated() {
     if (empCount == 0) {
         printf("\nDanh sach nhan vien rong!\n");
         return;
     }
 
-    int perPage = 5;  
+    int perPage = 5;
     int totalPage = (empCount + perPage - 1) / perPage;
     int currentPage = 1;
     int choice;
@@ -349,7 +386,11 @@ void DisplayEmployeesPaginated() {
         printf("=======================================================\n");
         printf("1. Trang truoc | 2. Trang sau | 0. Thoat\n");
         printf("Nhap lua chon: ");
-        scanf("%d", &choice);
+        if (scanf("%d", &choice) != 1) {
+            while (getchar() != '\n');
+            printf("Lua chon khong hop le!\n");
+            continue;
+        }
         getchar();
 
         if (choice == 1) {
@@ -381,7 +422,7 @@ void printEmployee(Employee emp) {
 
 void toLowerCase(char *str) {
     for (int i = 0; str[i]; i++) {
-        str[i] = tolower(str[i]);
+        str[i] = (char)tolower((unsigned char)str[i]);
     }
 }
 
@@ -434,6 +475,8 @@ void SearchEmployeeByName() {
         printf("-------------------------\n");
     }
 }
+
+
 // ===================== FUNC 6: Sort Employee List by Base Salary =====================
 void sortEmployeeBySalary() {
     if (empCount == 0) {
@@ -447,8 +490,10 @@ void sortEmployeeBySalary() {
         printf("1. Tang dan\n");
         printf("2. Giam dan\n");
         printf("Nhap lua chon: ");
-        scanf("%d", &sortOrder);
-
+        if (scanf("%d", &sortOrder) != 1) {
+            while (getchar() != '\n');
+            sortOrder = 0;
+        }
         if (sortOrder != 1 && sortOrder != 2) {
             printf("Lua chon khong hop le! Vui long nhap lai.\n");
         }
@@ -487,4 +532,192 @@ void sortEmployeeBySalary() {
     printf("\nSap xep thanh cong!\n");
 }
 
+// ===================== FUNC 7: Time Keeping =====================
 
+int validateDate(char date[]) {
+    int d, m, y;
+    if (sscanf(date, "%d/%d/%d", &d, &m, &y) != 3) return 0;
+    if (y < 1900 || y > 2100) return 0;
+    if (m < 1 || m > 12) return 0;
+
+    int dayMax;
+    switch (m) {
+        case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+            dayMax = 31; break;
+        case 4: case 6: case 9: case 11:
+            dayMax = 30; break;
+        case 2:
+            dayMax = (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 29 : 28;
+            break;
+        default:
+            return 0;
+    }
+    if (d < 1 || d > dayMax) return 0;
+    return 1;
+}
+
+int isFutureDate(int d, int m, int y) {
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+
+    int curD = t->tm_mday;
+    int curM = t->tm_mon + 1;
+    int curY = t->tm_year + 1900;
+
+    if (y > curY) return 1;
+    if (y == curY && m > curM) return 1;
+    if (y == curY && m == curM && d > curD) return 1;
+    return 0;
+}
+
+int checkDuplicateTimeSheet(char empId[], char date[]) {
+    for (int i = 0; i < logCount; i++) {
+        if (strcmp(timeList[i].empId, empId) == 0 &&
+            strcmp(timeList[i].date, date) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void CheckInWorkDay() {
+    char checkInEmpId[20];
+    char checkInDate[20];
+
+    printf("\n=== CHAM NGAY CONG ===\n");
+
+    // ================== NHAP VA KIEM TRA MA NV ==================
+    int idx;
+    while (1) {
+        printf("Nhap ma nhan vien: ");
+        inputString(checkInEmpId, 20);
+
+        if (strlen(checkInEmpId) == 0) {
+            printf("? Ma nhan vien khong duoc rong!\n");
+            continue;
+        }
+
+        idx = findEmpByID(checkInEmpId);
+        if (idx == -1) {
+            printf("? Khong ton tai nhan vien nay! Nhap lai.\n");
+            continue;
+        }
+
+        break;
+    }
+
+    // ================== NHAP VA KIEM TRA NGAY ==================
+    int d, m, y;
+
+    while (1) {
+        printf("Nhap ngay cham cong (dd/mm/yyyy): ");
+        inputString(checkInDate, 20);
+
+        if (strlen(checkInDate) == 0) {
+            printf("? Ngay cham cong khong duoc rong!\n");
+            continue;
+        }
+
+        if (!validateDate(checkInDate)) {
+            printf("? Ngay khong hop le! (vd: 22/11/2025)\n");
+            continue;
+        }
+
+        sscanf(checkInDate, "%d/%d/%d", &d, &m, &y);
+
+        if (isFutureDate(d, m, y)) {
+            printf("? Khong the cham cong cho ngay trong tuong lai!\n");
+            continue;
+        }
+
+        break;
+    }
+
+    // ================== KIEM TRA TRUNG TIMESHEET ==================
+    if (checkDuplicateTimeSheet(checkInEmpId, checkInDate)) {
+        printf("? Nhan vien da duoc cham cong vao ngay %s!\n", checkInDate);
+        return;
+    }
+
+    // ================== TANG WORKDAY ==================
+    empList[idx].workDay++;
+
+    // ================== TAO LOG TIMESHEET ==================
+    TimeSheet ts;
+    sprintf(ts.logId, "LOG%03d", logCount + 1);
+    strcpy(ts.empId, checkInEmpId);
+    strcpy(ts.date, checkInDate);
+    strcpy(ts.status, "Di lam");
+
+    timeList[logCount++] = ts;
+
+    printf("? Cham cong thanh cong cho NV [%s] ngay [%s]\n",
+           checkInEmpId, checkInDate);
+}
+
+// ===================== FUNC 8: View Personal TimeSheet =====================
+void ViewPersonalTimeSheet() {
+    if (empCount == 0) {
+        printf("\nDanh sach nhan vien trong! Khong the xem bang cong.\n");
+        return;
+    }
+
+    if (logCount == 0) {
+        printf("\nChua co du lieu cham cong nao trong he thong!\n");
+        return;
+    }
+
+    char viewEmpId[20];
+    int empIndex;
+    
+    printf("\n=== XEM BANG CONG CA NHAN ===\n");
+
+  
+    while (1) {
+        printf("Nhap ma nhan vien can xem bang cong: ");
+        inputString(viewEmpId, 20);
+
+        if (strlen(viewEmpId) == 0) {
+            printf("? Ma nhan vien khong duoc rong! Nhap lai.\n");
+            continue;
+        }
+
+        empIndex = findEmpByID(viewEmpId);
+        if (empIndex == -1) {
+            printf("? Khong tim thay nhan vien co ma [%s]! Nhap lai.\n", viewEmpId);
+            continue;
+        }
+        break; 
+    }
+
+    
+    int found = 0;
+    printf("\n");
+    printf("==================================================\n");
+    printf("         BANG CONG CA NHAN CUA NHAN VIEN          \n");
+    printf("==================================================\n");
+    printf("Ma NV     : %s\n", empList[empIndex].empId);
+    printf("Ho ten    : %s\n", empList[empIndex].name);
+    printf("Chuc vu   : %s\n", empList[empIndex].position);
+    printf("--------------------------------------------------\n");
+    printf("%-10s %-15s %-12s\n", "Ma Log", "Ngay cham", "Trang thai");
+    printf("--------------------------------------------------\n");
+
+    for (int i = 0; i < logCount; i++) {
+        if (strcmp(timeList[i].empId, viewEmpId) == 0) {
+            printf("%-10s %-15s %-12s\n",
+                   timeList[i].logId,
+                   timeList[i].date,
+                   timeList[i].status);
+            found = 1;
+        }
+    }
+
+    if (!found) {
+        printf("    ---> Chua co lan cham cong nao!\n");
+    } else {
+        printf("--------------------------------------------------\n");
+        printf("Tong cong: %d ngay da cham\n", empList[empIndex].workDay);
+    }
+    printf("==================================================\n");
+}
