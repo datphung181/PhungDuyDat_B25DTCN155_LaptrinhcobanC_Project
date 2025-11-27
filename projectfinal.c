@@ -458,9 +458,7 @@ void SearchEmployeeByName() {
             printf("%s -> Tim thay\n", empList[i].name);
             foundIndex[foundCount++] = i;
             foundAny = 1;
-        } else {
-            printf("%s -> Khong tim thay\n", empList[i].name);
-        }
+        } 
     }
 
     if (!foundAny) {
